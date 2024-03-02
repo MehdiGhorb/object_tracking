@@ -45,8 +45,8 @@ def draw_bounding_boxes(video_path, csv_path, output_video_path):
     print(f"Bounding boxes added and new video saved to: {output_video_path}")
 
 # Example usage
-video_path = 'crosswalk.avi'
-csv_path = 'crosswalk.csv'
-output_video_path = 'ddput_video.avi'
+video_path = 'assets/original_videos/dot_video.mp4'
+csv_path = 'assets/bb_coordinates/bounding_box_coordinates.txt'
+output_video_path = 'assets/bb_videos/dot_bb_video.mp4'
 
 draw_bounding_boxes(video_path, csv_path, output_video_path)
