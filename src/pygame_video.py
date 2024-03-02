@@ -1,31 +1,40 @@
 import pygame
 import sys
 import cv2
+import os
+import random
 from utils.path import *
 
 # Set screen dimensions
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 FPS = 30
-VIDEO__LENGTH = 20
-OUTPUT_VIDEO_PATH = os.path.join(ORIGINAL_VIDEOS_DIR, "moving_star.mp4")
+VIDEO_LENGTH = 30
+OUTPUT_VIDEO_PATH = os.path.join(ORIGINAL_VIDEOS_DIR, 'moving_square_3.mp4')
 
 # Set colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
+RED = (255, 0, 0)
+PURPLE = (128, 0, 128)
+BLUE = (0, 0, 255)
+PINK = (255, 192, 203)
 
-# List of possible shapes
-# 'circle', 'square', 'star', etc.
-SHAPES = ['circle', 'square', 'star']
+object_color = PURPLE
+sh = 'square'
 
 class Shape:
     def __init__(self, screen, shape):
         self.screen = screen
         self.shape = shape
-        self.x = SCREEN_WIDTH // 2
-        self.y = SCREEN_HEIGHT // 2
-        self.speed_x = 5
-        self.speed_y = 5
+        # Initialize position randomly within the screen boundaries
+        self.x = random.randint(0, SCREEN_WIDTH)
+        self.y = random.randint(0, SCREEN_HEIGHT)
+        # Initialize direction randomly
+        self.speed_x = random.choice([-5, 5])
+        self.speed_y = random.choice([-5, 5])
 
     def update(self):
         self.x += self.speed_x
@@ -39,16 +48,16 @@ class Shape:
 
     def draw(self):
         if self.shape == 'circle':
-            pygame.draw.circle(self.screen, BLACK, (self.x, self.y), 15)
+            pygame.draw.circle(self.screen, object_color, (self.x, self.y), 10)
         elif self.shape == 'square':
-            pygame.draw.rect(self.screen, BLACK, (self.x - 15, self.y - 15, 30, 30))
+            pygame.draw.rect(self.screen, object_color, (self.x - 15, self.y - 15, 30, 30))
         elif self.shape == 'star':
             # Draw a star (customize as needed)
             points = [(self.x, self.y - 20), (self.x + 10, self.y + 5), (self.x + 25, self.y + 10),
                       (self.x + 15, self.y + 25), (self.x + 20, self.y + 40), (self.x, self.y + 30),
                       (self.x - 20, self.y + 40), (self.x - 15, self.y + 25), (self.x - 25, self.y + 10),
                       (self.x - 10, self.y + 5)]
-            pygame.draw.polygon(self.screen, BLACK, points)
+            pygame.draw.polygon(self.screen, object_color, points)
 
 def save_video(frames, fps, output_path):
     height, width = frames[0].shape[:2]
@@ -65,10 +74,10 @@ def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Moving Object")
 
-    shape = Shape(screen, 'star')  # Default shape is a circle
+    shape = Shape(screen, sh)  # Default shape is a circle
 
     frames = []
-    total_frames = FPS * VIDEO__LENGTH
+    total_frames = FPS * VIDEO_LENGTH
 
     # Main loop
     for frame_count in range(total_frames):
