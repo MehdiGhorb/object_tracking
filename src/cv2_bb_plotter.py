@@ -3,9 +3,9 @@ import numpy as np
 import csv
 from utils.path import *
 
-INPUT_VIDEO_PATH = os.path.join(ORIGINAL_VIDEOS_DIR, "moving_star.mp4")
-OUTPUT_VIDEO_PATH = os.path.join(BB_VIDEOS_DIR, 'moving_star.mp4')
-COORDINATESS = os.path.join(BB_COORDINATES_DIR, 'moving_star.csv')
+INPUT_VIDEO_PATH = os.path.join(ORIGINAL_VIDEOS_DIR, "moving_rect_0.mp4")
+OUTPUT_VIDEO_PATH = os.path.join(BB_VIDEOS_DIR, "moving_rect_0.mp4")
+COORDINATESS = os.path.join(BB_COORDINATES_DIR, "moving_rect_0.csv")
 
 def detect_circle(frame):
     # Convert frame to grayscale
@@ -14,8 +14,14 @@ def detect_circle(frame):
     # Apply GaussianBlur to reduce noise
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
+    # Apply adaptive thresholding
+    thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+
+    # Apply Canny edge detection
+    edges = cv2.Canny(thresh, 50, 150)
+
     # Apply HoughCircles to detect circles
-    circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=1, minDist=20, param1=50, param2=30, minRadius=10, maxRadius=50)
+    circles = cv2.HoughCircles(edges, cv2.HOUGH_GRADIENT, dp=1, minDist=20, param1=50, param2=30, minRadius=5, maxRadius=50)
 
     if circles is not None:
         # Convert coordinates and radius to integers
@@ -23,8 +29,8 @@ def detect_circle(frame):
 
         # Draw circles and bounding boxes
         for (x, y, r) in circles:
-            cv2.circle(frame, (x, y), r, (0, 255, 0), 4)
-            cv2.rectangle(frame, (x - r, y - r), (x + r, y + r), (0, 255, 0), 2)
+            #cv2.circle(frame, (x, y), r, (0, 255, 0), 4)
+            cv2.rectangle(frame, (x - r - 10, y - r - 10), (x + r + 10, y + r + 10), (0, 255, 0), 2)
 
         # Extract coordinates of the first detected circle
         x_coord = circles[0][0]
@@ -33,7 +39,7 @@ def detect_circle(frame):
         return frame, x_coord, y_coord
 
     else:
-        return frame, None, None
+        return frame, '-', '-'
     
 def detect_star(frame):
     # Convert frame to grayscale
@@ -56,9 +62,11 @@ def detect_star(frame):
         if len(approx) == 10:
             stars.append(approx)
 
-    # Draw contours of detected stars on the frame
+    # Draw rectangles around detected stars on the frame
     frame_with_stars = frame.copy()
-    cv2.drawContours(frame_with_stars, stars, -1, (0, 255, 0), 4)
+    for star in stars:
+        x, y, w, h = cv2.boundingRect(star)
+        cv2.rectangle(frame_with_stars, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
     # Extract coordinates of the first detected star
     if stars:
@@ -69,7 +77,48 @@ def detect_star(frame):
             y_coord = int(M["m01"] / M["m00"])
             return frame_with_stars, x_coord, y_coord
 
-    return frame_with_stars, None, None
+    return frame_with_stars, '-', '-'
+
+def detect_rectangle(frame):
+    # Convert frame to grayscale
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Apply GaussianBlur to reduce noise
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    # Detect edges using Canny edge detection
+    edges = cv2.Canny(blurred, 30, 150)
+
+    # Find contours in the edges
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Filter contours based on their shape (rectangle)
+    rectangles = []
+    for contour in contours:
+        approx = cv2.approxPolyDP(contour, 0.05 * cv2.arcLength(contour, True), True)
+        if len(approx) == 4:
+            rectangles.append(approx)
+
+    # Draw rectangles around detected rectangles on the frame
+    frame_with_rectangles = frame.copy()
+    for rectangle in rectangles:
+        x, y, w, h = cv2.boundingRect(rectangle)
+        x -= 10  # Adjust bounding box size
+        y -= 10
+        w += 20
+        h += 20
+        cv2.rectangle(frame_with_rectangles, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+    # Extract coordinates of the first detected rectangle
+    if rectangles:
+        rectangle = rectangles[0]
+        M = cv2.moments(rectangle)
+        if M["m00"] != 0:
+            x_coord = int(M["m10"] / M["m00"])
+            y_coord = int(M["m01"] / M["m00"])
+            return frame_with_rectangles, x_coord, y_coord
+
+    return frame_with_rectangles, '-', '-'
 
 def main(input_video_path, output_video_path, output_csv_path):
     cap = cv2.VideoCapture(input_video_path)
@@ -96,7 +145,7 @@ def main(input_video_path, output_video_path, output_csv_path):
                 break
 
             # Detect circle in the frame
-            processed_frame, x_coord, y_coord = detect_star(frame)
+            processed_frame, x_coord, y_coord = detect_rectangle(frame)
 
             # Write coordinates to CSV
             if x_coord is not None and y_coord is not None:

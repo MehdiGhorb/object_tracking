@@ -8,9 +8,9 @@ from utils.path import *
 # Set screen dimensions
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-FPS = 30
-VIDEO_LENGTH = 30
-OUTPUT_VIDEO_PATH = os.path.join(ORIGINAL_VIDEOS_DIR, 'moving_square_3.mp4')
+FPS = 1
+VIDEO_LENGTH = 20
+OUTPUT_VIDEO_PATH = os.path.join(ORIGINAL_VIDEOS_DIR, 'moving_circle_4.mp4')
 
 # Set colors
 WHITE = (255, 255, 255)
@@ -23,7 +23,7 @@ BLUE = (0, 0, 255)
 PINK = (255, 192, 203)
 
 object_color = PURPLE
-sh = 'square'
+sh = 'circle'
 
 class Shape:
     def __init__(self, screen, shape):
