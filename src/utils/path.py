@@ -1,7 +1,9 @@
 import os
 
 # Get the current working directory
-MAIN_DIR = '/mnt/c/Users/ghorb/OneDrive/Desktop/object_tracking'
+current_path = os.getcwd()
+parts = current_path.split("object_tracking")
+MAIN_DIR = parts[0] + "object_tracking"
 
 # Define the data directory
 DATA_DIR = os.path.join(MAIN_DIR, 'data')
@@ -12,3 +14,4 @@ ORIGINAL_VAL_VIDEOS_DIR = os.path.join(ASSETS_DIR, 'original_val_videos')
 BB_VIDEOS_DIR = os.path.join(ASSETS_DIR, 'bb_videos')
 BB_COORDINATES_DIR = os.path.join(ASSETS_DIR, 'bb_coordinates')
 PREDICTED_VIDEOS_DIR = os.path.join(ASSETS_DIR, 'predictions')
+PREPROCESSED_BB_COORDINATES_DIR = os.path.join(ASSETS_DIR, 'preprocessed_bb_coordinates')
