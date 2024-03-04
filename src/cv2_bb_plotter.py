@@ -3,9 +3,9 @@ import numpy as np
 import csv
 from utils.path import *
 
-INPUT_VIDEO_PATH = os.path.join(ORIGINAL_VIDEOS_DIR, "moving_star_3.mp4")
-OUTPUT_VIDEO_PATH = os.path.join(BB_VIDEOS_DIR, "moving_star_3.mp4")
-COORDINATESS = os.path.join(BB_COORDINATES_DIR, "moving_star_3.csv")
+INPUT_VIDEO_PATH = os.path.join(ORIGINAL_VAL_VIDEOS_DIR, "moving_circle_val_0.mp4")
+OUTPUT_VIDEO_PATH = os.path.join(BB_VIDEOS_DIR, "moving_val_0.mp4")
+COORDINATESS = os.path.join(BB_COORDINATES_DIR, "moving_circle_val_0.csv")
 
 def detect_circle(frame):
     # Convert frame to grayscale
@@ -145,7 +145,7 @@ def main(input_video_path, output_video_path, output_csv_path):
                 break
 
             # Detect circle in the frame
-            processed_frame, x_coord, y_coord = detect_star(frame)
+            processed_frame, x_coord, y_coord = detect_circle(frame)
 
             # Write coordinates to CSV
             if x_coord is not None and y_coord is not None:

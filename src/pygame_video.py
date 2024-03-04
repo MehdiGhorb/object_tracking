@@ -8,9 +8,9 @@ from utils.path import *
 # Set screen dimensions
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-FPS = 1
+FPS = 30
 VIDEO_LENGTH = 20
-OUTPUT_VIDEO_PATH = os.path.join(ORIGINAL_VIDEOS_DIR, 'moving_circle_4.mp4')
+OUTPUT_VIDEO_PATH = os.path.join(ORIGINAL_VAL_VIDEOS_DIR, 'moving_circle_val_0.mp4')
 
 # Set colors
 WHITE = (255, 255, 255)
@@ -22,7 +22,7 @@ PURPLE = (128, 0, 128)
 BLUE = (0, 0, 255)
 PINK = (255, 192, 203)
 
-object_color = PURPLE
+object_color = BLACK
 sh = 'circle'
 
 class Shape:
@@ -48,7 +48,7 @@ class Shape:
 
     def draw(self):
         if self.shape == 'circle':
-            pygame.draw.circle(self.screen, object_color, (self.x, self.y), 10)
+            pygame.draw.circle(self.screen, object_color, (self.x, self.y), 7)
         elif self.shape == 'square':
             pygame.draw.rect(self.screen, object_color, (self.x - 15, self.y - 15, 30, 30))
         elif self.shape == 'star':
