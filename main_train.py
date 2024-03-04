@@ -1,12 +1,13 @@
 #from src.main_helper import *
 from src.utils.path import *
 import numpy as np
-from src.pyESN.pyESN import ESN
+from src.pyESNN.pyESN import ESN
 import cv2
 import os
 import pandas as pd
 import pickle
 from tqdm import tqdm
+import torch
 
     
 #video_path = os.path.join(ORIGINAL_VIDEOS_DIR, "moving_circle.mp4")
@@ -16,11 +17,12 @@ from tqdm import tqdm
 #output_video_path = os.path.join(PREDICTED_VIDEOS_DIR, 'moving_star_predicted.mp4')
 
 def main():
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Define the Echo State Network (ESN) parameters
     N_INPUTS = 480000  # Number of input dimensions (in this case, grayscale pixel values)
     N_OUTPUTS = 2  # Number of output dimensions (x and y coordinates)
-    N_RESERVOIR = 1000  # Number of reservoir neurons
+    N_RESERVOIR = 10  # Number of reservoir neurons
     SPECTRAL_RADIUS = 0.99  # Spectral radius of the reservoir weight matrix
     INPUT_SCALING = 0.1  # Scaling of the input weights
 
@@ -51,9 +53,11 @@ def main():
         csv_path = os.path.join(PREPROCESSED_BB_COORDINATES_DIR, csv)
         target_outputs_df = pd.read_csv(csv_path)
         target_outputs = target_outputs_df[['X-coordinate', 'Y-coordinate']].values
-
+        target_outputs = target_outputs[0:]
+        target_outputs = target_outputs.astype(np.float64)
         # Initialize reservoir state
         reservoir_state = np.zeros(esn.n_reservoir)
+        print(len(target_outputs))
         
         # Read the video frame by frame
         i = 0
@@ -67,7 +71,7 @@ def main():
 
             # Flatten the frame to obtain the input vector
             input_vector = gray_frame.flatten().astype(float)
-            input_pattern = input_vector.reshape(-1, 1)
+            input_pattern = torch.tensor(input_vector, device=device).reshape(-1, 1)
 
             # Run the input vector through the ESN
             reservoir_state = esn._update(reservoir_state, input_pattern, target_outputs[i])
@@ -76,7 +80,7 @@ def main():
             res_states.append(reservoir_state)
 
             # Update target output
-            i += 1
+            i += 1            
 
         # Close the video capture
         cap.release()
@@ -86,8 +90,12 @@ def main():
         target_outputs_all_videos.extend(target_outputs)
 
     # Reshape the reservoir states array for training
-    X = np.array(res_states_all_videos[:-1])  # Input
-    y = np.array(target_outputs_all_videos[1:])  # Target output
+    #X = np.array([state.cpu().numpy() for state in res_states_all_videos[:-1]])  # Input
+    #y = np.array([target.cpu().numpy() for target in target_outputs_all_videos[1:]])
+
+    X = res_states_all_videos.tensor()
+    y = target_outputs_all_videos.tensor()
+
 
     # Train the ESN
     esn.fit(X, y)

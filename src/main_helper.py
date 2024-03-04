@@ -2,7 +2,7 @@ import cv2
 import pandas as pd
 from tqdm import trange
 #from sklearn.model_selection import train_test_split
-from src.pyESN.pyESN import ESN
+from src.pyESNN.pyESN import ESN
 import numpy as np
 
 def train_and_predict_mul_epochs(video_paths:list, csv_paths:list, num_epochs:int):

@@ -71,26 +71,38 @@ class ESN(nn.Module):
         self.initweights()
 
     def initweights(self):
-        W = torch.tensor(self.random_state_.rand(self.n_reservoir, self.n_reservoir) - 0.5)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        W = torch.tensor(self.random_state_.rand(self.n_reservoir, self.n_reservoir) - 0.5, device=device)
         W[self.random_state_.rand(*W.shape) < self.sparsity] = 0
-        radius = torch.max(torch.abs(torch.eig(W)[0]))
+        L_complex = torch.linalg.eigvals(W)
+        radius = torch.max(torch.abs(L_complex))
         self.W = W * (self.spectral_radius / radius)
 
-        self.W_in = torch.tensor(self.random_state_.rand(self.n_reservoir, self.n_inputs) * 2 - 1)
-        self.W_feedb = torch.tensor(self.random_state_.rand(self.n_reservoir, self.n_outputs) * 2 - 1)
-
+        self.W_in = torch.tensor(self.random_state_.rand(self.n_reservoir, self.n_inputs) * 2 - 1, device=device)
+        self.W_feedb = torch.tensor(self.random_state_.rand(self.n_reservoir, self.n_outputs) * 2 - 1, device=device)
+    
     def _update(self, state, input_pattern, output_pattern):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Convert tensors to PyTorch tensors and move to the appropriate device
+        state = torch.tensor(state, device=device).clone().detach()
+        input_pattern = torch.tensor(input_pattern, device=device).clone().detach()
+        output_pattern = torch.tensor(output_pattern, device=device, dtype=self.W_feedb.dtype).clone().detach()
+
         if self.teacher_forcing:
             preactivation = (torch.matmul(self.W, state)
-                             + torch.matmul(self.W_in, input_pattern)
-                             + torch.matmul(self.W_feedb, output_pattern))
+                            + torch.matmul(self.W_in, input_pattern)
+                            + torch.matmul(self.W_feedb, output_pattern))
         else:
             preactivation = (torch.matmul(self.W, state)
-                             + torch.matmul(self.W_in, input_pattern))
+                            + torch.matmul(self.W_in, input_pattern))
         return (torch.tanh(preactivation)
-                + self.noise * (torch.rand(self.n_reservoir) - 0.5))
+                + self.noise * (torch.rand(self.n_reservoir, device=device) - 0.5))
 
     def _scale_inputs(self, inputs):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
         if self.input_scaling is not None:
             inputs = torch.matmul(inputs, torch.diag(self.input_scaling))
         if self.input_shift is not None:
@@ -98,6 +110,8 @@ class ESN(nn.Module):
         return inputs
 
     def _scale_teacher(self, teacher):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
         if self.teacher_scaling is not None:
             teacher = teacher * self.teacher_scaling
         if self.teacher_shift is not None:
@@ -105,6 +119,8 @@ class ESN(nn.Module):
         return teacher
 
     def _unscale_teacher(self, teacher_scaled):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
         if self.teacher_shift is not None:
             teacher_scaled = teacher_scaled - self.teacher_shift
         if self.teacher_scaling is not None:
@@ -112,6 +128,8 @@ class ESN(nn.Module):
         return teacher_scaled
 
     def fit(self, inputs, outputs, inspect=False):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
         if inputs.ndim < 2:
             inputs = inputs.unsqueeze(1)
         if outputs.ndim < 2:
@@ -123,7 +141,7 @@ class ESN(nn.Module):
         if not self.silent:
             print("harvesting states...")
 
-        states = torch.zeros((inputs.shape[0], self.n_reservoir))
+        states = torch.zeros((inputs.shape[0], self.n_reservoir), device=device)
         for n in range(1, inputs.shape[0]):
             states[n, :] = self._update(states[n - 1], inputs_scaled[n, :],
                                         teachers_scaled[n - 1, :])
@@ -153,6 +171,8 @@ class ESN(nn.Module):
         return pred_train
 
     def predict(self, inputs, continuation=True):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
         if inputs.ndim < 2:
             inputs = inputs.unsqueeze(1)
         n_samples = inputs.shape[0]
@@ -162,13 +182,13 @@ class ESN(nn.Module):
             lastinput = self.lastinput
             lastoutput = self.lastoutput
         else:
-            laststate = torch.zeros(self.n_reservoir)
-            lastinput = torch.zeros(self.n_inputs)
-            lastoutput = torch.zeros(self.n_outputs)
+            laststate = torch.zeros(self.n_reservoir, device=device)
+            lastinput = torch.zeros(self.n_inputs, device=device)
+            lastoutput = torch.zeros(self.n_outputs, device=device)
 
         inputs = torch.cat((lastinput, self._scale_inputs(inputs)))
-        states = torch.cat((laststate, torch.zeros((n_samples, self.n_reservoir))))
-        outputs = torch.cat((lastoutput, torch.zeros((n_samples, self.n_outputs))))
+        states = torch.cat((laststate, torch.zeros((n_samples, self.n_reservoir), device=device)))
+        outputs = torch.cat((lastoutput, torch.zeros((n_samples, self.n_outputs), device=device)))
 
         for n in range(n_samples):
             states[n + 1, :] = self._update(states[n, :], inputs[n + 1, :], outputs[n, :])
