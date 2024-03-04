@@ -93,8 +93,8 @@ def main():
     #X = np.array([state.cpu().numpy() for state in res_states_all_videos[:-1]])  # Input
     #y = np.array([target.cpu().numpy() for target in target_outputs_all_videos[1:]])
 
-    X = res_states_all_videos.tensor()
-    y = target_outputs_all_videos.tensor()
+    X = torch.tensor(res_states_all_videos)
+    y = torch.tensor(target_outputs_all_videos)
 
 
     # Train the ESN
