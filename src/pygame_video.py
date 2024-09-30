@@ -5,11 +5,11 @@ import os
 import random
 
 # Set screen dimensions
-SCREEN_WIDTH = 200
-SCREEN_HEIGHT = 200
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 600
 FPS = 30
-VIDEO_LENGTH = 20
-OUTPUT_VIDEO_PATH = '../assets/original_train_videos/moving_test.mp4'
+VIDEO_LENGTH = 5
+OUTPUT_VIDEO_PATH = '../assets/train_videos_shapes/moving_star.mp4'
 
 # Set colors
 WHITE = (255, 255, 255)
@@ -21,9 +21,9 @@ PURPLE = (128, 0, 128)
 BLUE = (0, 0, 255)
 PINK = (255, 192, 203)
 
-object_color = PINK
-background_color = RED  # Change the background color here
-sh = 'circle'
+object_color = BLUE
+background_color = PINK # Change the background color here
+sh = 'star'
 
 class Shape:
     def __init__(self, screen, shape):

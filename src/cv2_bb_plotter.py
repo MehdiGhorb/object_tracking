@@ -7,16 +7,15 @@ import os
 current_path = os.getcwd()
 parts = current_path.split("object_tracking")
 MAIN_DIR = parts[0] + "object_tracking"
-DATA_DIR = os.path.join(MAIN_DIR, 'data')
 ASSETS_DIR = os.path.join(MAIN_DIR, 'assets')
-ORIGINAL_VIDEOS_DIR = os.path.join(ASSETS_DIR, 'original_train_videos')
+ORIGINAL_VIDEOS_DIR = os.path.join(ASSETS_DIR, 'train_videos_shapes')
 BB_VIDEOS_DIR = os.path.join(ASSETS_DIR, 'bb_videos')
 BB_COORDINATES_DIR = os.path.join(ASSETS_DIR, 'bb_coordinates')
 
 
-INPUT_VIDEO_PATH = os.path.join(ORIGINAL_VIDEOS_DIR, "moving_circle_14.mp4")
-OUTPUT_VIDEO_PATH = os.path.join(BB_VIDEOS_DIR, "moving_circle_14.mp4")
-COORDINATESS = os.path.join(BB_COORDINATES_DIR, "moving_circle_14.csv")
+INPUT_VIDEO_PATH = os.path.join(ORIGINAL_VIDEOS_DIR, "moving_circle.mp4")
+OUTPUT_VIDEO_PATH = os.path.join(BB_VIDEOS_DIR, "moving_circle.mp4")
+COORDINATESS = os.path.join(BB_COORDINATES_DIR, "moving_circle.csv")
 
 def detect_circle(frame):
     # Convert frame to grayscale
