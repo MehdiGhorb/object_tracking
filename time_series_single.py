@@ -17,7 +17,6 @@ import time
 Build the model
 """
 
-# Define the Echo State Network (ESN) parameters
 N_INPUTS = 900  # Number of input dimensions (in this case, grayscale pixel values)
 N_OUTPUTS = 2  # Number of output dimensions (x and y coordinates)
 N_RESERVOIR = 6000  # Number of reservoir neurons
@@ -69,14 +68,12 @@ def plot_image(img, bb, save_path):
     rect = patches.Rectangle((x, y), 5, 5, linewidth=2, edgecolor='r', facecolor='none')
     ax.add_patch(rect)
 
-    # Save the figure instead of showing it
     plt.savefig(save_path)
-    plt.close()  # Close the figure to free memory
+    plt.close() 
 
 # Record the start time
 start_time = time.time()
 
-# find all png files
 X, y_bb = [], []
 img_path = os.path.join(os.getcwd(), f'assets/original_frames/moving_circle_0')
 files = glob.glob(os.path.join(img_path, '*.png'))
@@ -95,17 +92,14 @@ X.append(X_test)
 y_bb.append([x, y])
 X, y_bb = np.array(X), np.array(y_bb)
 
-# Create MinMaxScaler for bounding box data
 scaler = MinMaxScaler()
 scaled_bb = scaler.fit_transform(y_bb.get())
 
-# Split the data into training and testing sets
 X_train, X_test = X[:-1], X[-1:]
 y_bb_train, y_bb_test = scaled_bb[:-1], scaled_bb[-1:]
 
 print(f'shape of X: {X.shape}, shape of y_bb:{y_bb.shape}')
 
-# fit model to the different target data (image, bb coordinates, class label)
 esn.fit(np.array(X_train[:, :, :, 0]).reshape(len(X_train), -1), np.array(y_bb_train), inspect=True)
 
 # predict the test data
@@ -117,11 +111,9 @@ bb = scaler.inverse_transform(bb_scaled)
 print(bb)
 
 bb_pre = 0
-# abs to avoid negative values
 bb[bb_pre][0] = abs(bb[bb_pre][0])
 bb[bb_pre][1] = abs(bb[bb_pre][1])
 
-# Save ground truth and prediction images
 plt.figure()
 y_bb_test = scaler.inverse_transform(y_bb_test.reshape(1, -1))
 plot_image(X_test[bb_pre], y_bb_test[bb_pre], 'ground_truth_time_dependent.png')
@@ -141,5 +133,3 @@ print("Mean Absolute Error:", mae_loss)
 end_time = time.time()
 
 print(f"Time taken: {end_time - start_time} seconds")
-
-# test 

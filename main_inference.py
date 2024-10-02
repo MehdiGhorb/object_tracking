@@ -15,11 +15,9 @@ def main():
               input_scaling=0.1,
               silent=False)
 
-    # Define paths to the videos
     #csv_directory = PREPROCESSED_BB_COORDINATES_DIR
     video_directory = os.path.join(ORIGINAL_VAL_VIDEOS_DIR, 'moving_circle_3.mp4')
 
-    # Open video file
     cap = cv2.VideoCapture(video_directory)
     #cap_2 = cv2.VideoCapture(video_path_2)
 
@@ -42,10 +40,8 @@ def main():
     # Predict bounding box coordinates for the entire video
     predictions = esn.predict(frames, continuation=False)
 
-    # Release video capture object
     cap.release()
 
-    # Draw bounding boxes on the video
     output_video_path = os.path.join(PREDICTED_VIDEOS_DIR, 'moving_circle_val_2.mp4')
     draw_bounding_boxes(video_directory, predictions, output_video_path)
 

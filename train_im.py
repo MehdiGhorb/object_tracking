@@ -13,7 +13,6 @@ from sklearn.preprocessing import MinMaxScaler
 from skimage.transform import resize
 from src.utils.path import *
 
-# Define the Echo State Network (ESN) parameters
 N_INPUTS = 10000  # Number of input dimensions (in this case, grayscale pixel values)
 N_OUTPUTS = 2  # Number of output dimensions (x and y coordinates)
 N_RESERVOIR = 8000  # Number of reservoir neurons
@@ -36,19 +35,14 @@ HEIGHT_FACTOR = 600 // HEIGHT
 
 
 def draw_bounding_boxes_from_array(video_path, bounding_boxes, output_video_path):
-    # Open video file
     cap = cv2.VideoCapture(video_path)
 
-    # Get video properties
     fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    # Define the codec and create a VideoWriter object for AVI format
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
 
-    # Read each frame, draw bounding boxes, and write to output video
     frame_count = 0
     while cap.isOpened():
         ret, frame = cap.read()
@@ -56,21 +50,15 @@ def draw_bounding_boxes_from_array(video_path, bounding_boxes, output_video_path
         if not ret:
             break
 
-        # Extract coordinates for the current frame
         if frame_count < len(bounding_boxes):
             x, y = bounding_boxes[frame_count]
             x, y = int(x), int(y)
-            width, height = 30, 30  # Assumed width and height
-
-            # Draw bounding box
+            width, height = 30, 30 
             cv2.rectangle(frame, (x, y), (x + width, y + height), (0, 255, 0), 2)
 
-        # Write the frame to the output video
         out.write(frame)
-
         frame_count += 1
 
-    # Release video capture and writer objects
     cap.release()
     out.release()
 
@@ -104,12 +92,9 @@ def plot_image(img, bb, save_path):
     rect = patches.Rectangle((x, y), 10, 10, linewidth=2, edgecolor='r', facecolor='none')
     ax.add_patch(rect)
 
-    # Save the figure instead of showing it
     plt.savefig(save_path)
-    plt.close()  # Close the figure to free memory
+    plt.close()
 
-
-# find all png files
 #shapes = {'circle':4, 'rect':3, 'star':4}
 shapes = {'circle':15}
 X, y_bb = [], []
@@ -165,62 +150,22 @@ esn = ESN(n_inputs=N_INPUTS,
 esn.fit(np.array(X_train[:, :, :, 0]).reshape(len(X_train), -1), np.array(y_bb_train), inspect=True)
 print('Model fitted!\n')
 
-'''
-# predict the test data
-bb_scaled = esn.predict(np.array(X_test[:, :, :, 0]).reshape(len(X_test), -1))
-
-# Inverse min-max scaling
-bb_scaled = bb_scaled.get()
-bb = scaler.inverse_transform(bb_scaled)
-
-# Display the ground truth and predicted bounding boxes for a single test sample
-bb_pre = 90
-# abs to avoid negative values
-bb[bb_pre][0] = abs(bb[bb_pre][0])
-bb[bb_pre][1] = abs(bb[bb_pre][1])
-
-# Save ground truth and prediction images
-plt.figure()
-y_bb_test = scaler.inverse_transform(y_bb_test)
-plot_image(X_test[bb_pre], y_bb_test[bb_pre], 'ground_truth.png')
-
-plt.figure()
-
-plot_image(X_test[bb_pre], bb[bb_pre], 'prediction.png')
-
-# Calculate the Mean Squared Error (MSE)
-mse_loss = np.mean((np.array(bb) - np.array(y_bb_test)) ** 2)
-print("Mean Squared Error:", mse_loss)
-
-# Calculate the Mean Absolute Error (MAE)
-mae_loss = np.mean(np.abs(np.array(bb) - np.array(y_bb_test)))
-print("Mean Absolute Error:", mae_loss)
-'''
-
 # Inference on the entire video
 video_directory = os.path.join(ORIGINAL_VAL_VIDEOS_DIR, 'moving_circle_val_0.mp4')
 output_video_path = os.path.join(PREDICTED_VIDEOS_DIR, 'moving_circle_val_0.mp4')
 
-# Open video file
 cap = cv2.VideoCapture(video_directory)
-
 frames = []
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         break
-
-    # Convert frame to PNG format in memory
     with BytesIO() as f:
         iio.imwrite(f, frame, format='png')
         f.seek(0)
-        # Read PNG image from memory
         image_array = iio.imread(f)
 
-    # Resize the image
     image_array = resize(image_array, (100, 100), anti_aliasing=True)
-
-    # Append resized frame to frames list
     frames.append(image_array/255.0)
 
 # Convert frames to numpy array
@@ -228,20 +173,17 @@ frames = np.array(frames)
 frames = frames.reshape(frames.shape[0], 100, 100, 3)
 frames = frames[:, :, :, 0]
 
-# Predict bounding box coordinates for the entire video
 predictions = esn.predict(frames.reshape(len(frames), -1))
 
 # Inverse min-max scaling
 predictions  = predictions .get()
 bb = scaler.inverse_transform(predictions)
-# abs to avoid negative values
+
 for i in range(len(bb)):
     bb[i][0] = int(abs(bb[i][0]) * WIDTH_FACTOR)
     bb[i][1] = int(abs(bb[i][1]) * HEIGHT_FACTOR)
 print(bb)
 
-# Release video capture object
 cap.release()
 
-# Draw bounding boxes on the video
 draw_bounding_boxes_from_array(video_directory, bb, output_video_path)
